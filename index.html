@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>作業練習：元件變換</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/stylesheets/all.css">
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/solid.js" integrity="sha384-+Ga2s7YBbhOD6nie0DzrZpJes+b2K1xkpKxTFFcx59QmVPaSA8c7pycsNaFwUK6l" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/regular.js" integrity="sha384-t7yHmUlwFrLxHXNLstawVRBMeSLcXTbQ5hsd0ifzwGtN7ZF7RZ8ppM7Ldinuoiif" crossorigin="anonymous"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.0.8/js/fontawesome.js" integrity="sha384-7ox8Q2yzO/uWircfojVuCQOZl+ZZBg2D2J5nkpLqzH1HY0C1dHlTKIbpRz/LG23c" crossorigin="anonymous"></script>
+
+  </head>
+  
+  <body class="bg-lighter">
+    <div class="container my-5">
+      <div class="row">
+        <div class="col-md-9 post">      
+          <div id="app">
+          <select name="" id="" class="form-control mb-3" v-model="nowCity">
+              <option value="" disabled>--- 請選擇城市 ---</option>
+              <option value="all">全部城市</option>
+              <option value="臺北市">臺北市</option>
+              <option value="新北市">新北市</option>
+              <option value="基隆市">基隆市</option>
+              <option value="桃園市">桃園市</option>
+              <option value="新竹市">新竹市</option>
+              <option value="臺中市">臺中市</option>
+              <option value="嘉義市">嘉義市</option>
+              <option value="台南市">台南市</option>
+              <option value="高雄市">高雄市</option>
+              <option value="桃園縣">桃園縣</option>
+              <option value="新竹縣">新竹縣</option>
+              <option value="苗栗縣">苗栗縣</option>
+              <option value="彰化縣">彰化縣</option>
+              <option value="南投縣">南投縣</option>
+              <option value="雲林縣">雲林縣</option>
+              <option value="嘉義縣">嘉義縣</option>
+              <option value="屏東縣">屏東縣</option>
+              <option value="台東縣">台東縣</option>
+              <option value="花蓮縣">花蓮縣</option>
+              <option value="宜蘭縣">宜蘭縣</option>
+              <option value="澎湖縣">澎湖縣</option>
+              <option value="金門縣">金門縣</option>
+              <option value="連江縣">連江縣</option>
+          </select>
+          <h4> 關注城市:</h4>
+          <ul>
+              <div class="card-columns">
+              <div v-if="item" class="card" :class="chooseClass(item)"  v-for="(item,index) in myFavorFilter">
+                  <div class="card-header">{{item.County}} - {{item.SiteName}}
+                      <a data-focus="false"  @click.prevent="removeFavor($event, item,index)" href="#" class="float-right"  :class="{'active':item.active}"><i class="fas fa-star"></i></a>
+                  </div>
+                  <div class="card-body">
+                      <ul class="list-unstyled">
+                      <li>AQI 指數: {{item.AQI}}</li>
+                      <li>PM2.5: {{item['PM2.5']}}</li>
+                      <li>說明: {{item.Status}}</li>
+                      </ul>
+                      {{item.PublishTime}}
+                  </div>
+              </div>
+              </div>
+          </ul>
+          <br>
+          <br>
+          <ul>
+              <keep-alive>
+                  <div :is="'airDataComponent'" :now-city="nowCity" :child-data="data" v-if="data" @addfavor="addFavor"></div>    
+              </keep-alive>
+          </ul>
+          </div>
+
+<script type="text/x-template" id="airData">
+  <div class="card-columns">
+    <div class="card" :class="chooseClass(item)"  v-for="(item,index) in cityFilter">
+        <div class="card-header">{{item.County}} - {{item.SiteName}}
+          <a data-focus="false"  @click.prevent="toggleFavor(item, index)" href="#" class="float-right"  :class="{'active':item.active}"><i class="fas fa-star"></i></a>
+        </div>
+        <div class="card-body">
+          <ul class="list-unstyled">
+            <li>AQI 指數: {{item.AQI}}</li>
+            <li>PM2.5: {{item['PM2.5']}}</li>
+            <li>說明: {{item.Status}}</li>
+          </ul>
+          {{item.PublishTime}}
+        </div>
+    </div>
+  </div>
+</script>
+
+<script>
+// API 來源
+// https://opendata.epa.gov.tw/Data/Contents/AQI/
+
+Vue.component('airDataComponent', {
+  template: '#airData',
+  data(){
+    return{
+    }
+  },
+  props:{
+    childData:{
+      Object
+    },
+    nowCity:{
+      String,
+      default: 'all'
+    }
+  },
+ beforeMount() {
+  },
+  computed:{
+    cityList(){
+      return this.childData
+    },
+    cityFilter(){
+      if(this.nowCity === 'all') {
+        return this.childData
+      } else {
+        let vm = this
+        let newCityArr = []
+        this.cityList.forEach((item,index) => {
+          if(item.County === vm.nowCity){
+            newCityArr.push(vm.cityList[index])
+          }
+        });
+        return newCityArr
+      }
+    },
+  },
+  methods: {
+    chooseClass(item){
+      if(this.cityList){
+        if(item.Status === '良好'){
+          return 'status-aqi2'
+        } else if (item.Status === '普通'){
+          return 'status-aqi3'
+        } else {
+          return 'status-aqi4'
+        }
+      } else{
+        return ''
+      }
+    },
+    toggleFavor(item,index){
+      this.$emit('addfavor',item)
+      this.$forceUpdate()
+    }
+  }
+})
+
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    data: [],
+    location: [],
+    stared: [],
+    filter: '',
+    nowCity: '',
+    myFavorite:[]
+
+  },
+  created(){
+    this.nowCity = 'all'
+    let myFavorite = localStorage.getItem('myFavorite')
+    if(myFavorite){
+      this.myFavorite = JSON.parse(myFavorite)
+    }
+    let jsonData = localStorage.getItem('jsonData')
+    if(jsonData){
+      this.data = JSON.parse(jsonData)
+    } else {
+      this.getInitData()
+    }
+  },
+  computed:{
+    myFavorFilter(){
+      if(this.nowCity === 'all') {
+        return this.myFavorite
+      } else {
+        let newCityArr = []
+        this.myFavorite.forEach((item,index) => {
+          if(item.County === this.nowCity){
+            newCityArr.push(this.myFavorite[index])
+          }
+        });
+        return newCityArr
+      }
+    }
+  },
+  methods: {
+    _fetch(url,data){
+      return fetch(url).then( res => {return res.json()})
+    },
+    getInitData() {
+      const vm = this;
+      const api = 'http://opendata2.epa.gov.tw/AQI.json';
+
+      this._fetch(api).then( jsonData => {
+        jsonData.forEach( (item,index)=> vm.$set(item,'active',false))
+        this.data = jsonData
+      });
+    },
+    chooseCity(e){
+      this.nowCity = e.target.value
+    },
+    addFavor(item){
+      let lat = item.Latitude
+      let vm = this
+      item.active = true
+      this.data.some( (city,index) => {
+        if(city.Latitude === lat){
+          vm.data.splice(index,1)
+          return true
+        }
+      })
+      this.myFavorite.push(item)
+      localStorage.setItem('myFavorite', JSON.stringify(this.myFavorite))
+      localStorage.setItem('jsonData', JSON.stringify(this.data))
+    },
+    removeFavor(e,item,index){
+      let lat = item.Latitude
+      let vm = this
+      item.active = false
+      this.myFavorite.some( (city,index) => {
+        if(city.Latitude === lat){
+          vm.myFavorite.splice(index,1)
+          return true
+        }
+      })
+      this.data.push(item)
+      localStorage.setItem('myFavorite', JSON.stringify(this.myFavorite))
+      localStorage.setItem('jsonData', JSON.stringify(this.data))
+    },
+    chooseClass(item){
+      if(this.myFavorite){
+        if(item.Status === '良好'){
+          return 'status-aqi2'
+        } else if (item.Status === '普通'){
+          return 'status-aqi3'
+        } else {
+          return 'status-aqi4'
+        }
+      } else{
+        return ''
+      }
+    },
+  }
+});
+</script>
+
+<style>
+.status-aqi2 {
+  background-color: #00ff15;
+}
+.status-aqi3 {
+  background-color: #fbff00;
+}
+.status-aqi4 {
+  background-color: #ffae00;
+}
+.status-aqi5 {
+  background-color: #da0202;
+}
+.status-aqi6 {
+  background-color: #a30fbd;
+}
+.active{
+  color:#f10808 !important
+}
+
+.toggleBtn:hover{
+  cursor: pointer;
+}
+</style>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
